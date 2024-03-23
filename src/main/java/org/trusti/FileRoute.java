@@ -1,25 +1,25 @@
-package org.acme;
+package org.trusti;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
-import org.apache.camel.Route;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.http.base.HttpOperationFailedException;
-import org.apache.camel.support.RoutePolicySupport;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @ApplicationScoped
 public class FileRoute extends RouteBuilder {
+
+    public static final String OUTPUT_HEADER = "t_output";
 
     private static final Pattern HREF_PATTERN = Pattern.compile("href=\"(.*?)\"");
 
@@ -74,18 +74,33 @@ public class FileRoute extends RouteBuilder {
 
         from("direct:download-url")
                 .setHeader("file_url", body())
-                .log(LoggingLevel.INFO, "Downloading ${body}")
+                .log(LoggingLevel.INFO, "${body}")
+
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .setHeader(Exchange.CONTENT_TYPE, constant("text/plain"))
                 .toD("${body}")
+
+                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .toD("${header." + OUTPUT_HEADER + "}")
                 .setBody(header(Exchange.HTTP_RESPONSE_CODE))
+
                 .onException(HttpOperationFailedException.class)
                     .maximumRedeliveries(2)
                     .redeliveryDelay(0)
                     .handled(true)
                     .logExhausted(false)
                     .logExhaustedMessageBody(false)
-                    .log(LoggingLevel.ERROR, "${header.file_url}")
+                    .log(LoggingLevel.ERROR, "${header.file_url} could not be downloaded")
+                .end()
+
+                .onException(SocketException.class)
+                    .maximumRedeliveries(2)
+                    .redeliveryDelay(0)
+                    .handled(true)
+                    .logExhausted(false)
+                    .logExhaustedMessageBody(false)
+                    .log(LoggingLevel.ERROR, "${header.file_url} could not be sent")
                 .end();
     }
 
