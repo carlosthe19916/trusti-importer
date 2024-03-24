@@ -1,4 +1,4 @@
-package org.trusti;
+package org.trusti.http;
 
 import jakarta.inject.Inject;
 import org.apache.camel.ProducerTemplate;
@@ -8,8 +8,8 @@ import picocli.CommandLine.Parameters;
 
 import java.util.Map;
 
-@Command(name = "importer", mixinStandardHelpOptions = true)
-public class ImporterCommand implements Runnable {
+@Command(name = "http", mixinStandardHelpOptions = true, description = "Import data from a HTTP server")
+public class HttpCommand implements Runnable {
 
     @Inject
     ProducerTemplate producerTemplate;
@@ -24,7 +24,7 @@ public class ImporterCommand implements Runnable {
     public void run() {
         System.out.printf("Started ingestion from %s", source);
 
-        producerTemplate.requestBodyAndHeaders("direct:discover-url-directory", source, Map.of(FileRoute.OUTPUT_HEADER, output));
+        producerTemplate.requestBodyAndHeaders("direct:discover-url-directory", source, Map.of(HttpRoute.OUTPUT_HEADER, output));
 
         System.out.println("Finished successfully");
     }

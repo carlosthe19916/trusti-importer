@@ -1,4 +1,4 @@
-package org.trusti;
+package org.trusti.http;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.camel.Exchange;
@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @ApplicationScoped
-public class FileRoute extends RouteBuilder {
+public class HttpRoute extends RouteBuilder {
 
     public static final String OUTPUT_HEADER = "t_output";
 
