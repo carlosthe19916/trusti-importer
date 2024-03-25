@@ -14,17 +14,17 @@ public class HttpCommand implements Runnable {
     @Inject
     ProducerTemplate producerTemplate;
 
-    @Parameters(paramLabel = "source", description = "The HTTP server where the CSAF files are stored.")
-    String source;
+    @Parameters(paramLabel = "serverUrl", description = "The HTTP server where the CSAF files are stored.")
+    String serverUrl;
 
-    @CommandLine.Option(names = {"--output", "-o"}, required = true, description = "The URL where the files are going to be sent to.")
-    String output;
+    @CommandLine.Option(names = {"--target-url", "-tu"}, required = true, defaultValue = "${env:TARGET_URL}", description = "The URL where the files are going to be sent to.")
+    String targetUrl;
 
     @Override
     public void run() {
-        System.out.printf("Started ingestion from %s", source);
+        System.out.printf("Started ingestion from %s", serverUrl);
 
-        producerTemplate.requestBodyAndHeaders("direct:discover-url-directory", source, Map.of(HttpRoute.OUTPUT_HEADER, output));
+        producerTemplate.requestBodyAndHeaders("direct:discover-url-directory", serverUrl, Map.of(HttpRoute.OUTPUT_HEADER, targetUrl));
 
         System.out.println("Finished successfully");
     }

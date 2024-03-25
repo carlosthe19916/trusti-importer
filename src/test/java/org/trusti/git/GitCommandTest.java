@@ -15,7 +15,7 @@ class GitCommandTest {
     @Test
     @Launch(value = {
             "git",
-            "--output=http://localhost:8080/advisories",
+            "--target-url=http://localhost:8080/advisories",
             "--working-directory=src/test/resources",
             "https://github.com/carlosthe19916/trusti.git"
     })
