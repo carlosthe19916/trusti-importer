@@ -26,6 +26,12 @@ public class TrustiServer implements QuarkusTestResourceLifecycleManager {
                         .withHeader("Content-Type", "application/json")
                 )
         );
+        server.stubFor(put(urlEqualTo("/advisories"))
+                .willReturn(aResponse()
+                        .withStatus(201)
+                        .withHeader("Content-Type", "application/json")
+                )
+        );
 
         return Collections.emptyMap();
     }

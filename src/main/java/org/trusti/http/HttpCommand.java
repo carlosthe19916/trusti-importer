@@ -2,6 +2,7 @@ package org.trusti.http;
 
 import jakarta.inject.Inject;
 import org.apache.camel.ProducerTemplate;
+import org.trusti.Constants;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -24,7 +25,13 @@ public class HttpCommand implements Runnable {
     public void run() {
         System.out.printf("Started ingestion from %s", serverUrl);
 
-        producerTemplate.requestBodyAndHeaders("direct:discover-url-directory", serverUrl, Map.of(HttpRoute.OUTPUT_HEADER, targetUrl));
+        Map<String, Object> headers = Map.of(
+                Constants.IMPORTER_TYPE_HEADER, "http",
+                Constants.IMPORTER_OUTPUT_BASE_URL, targetUrl,
+                Constants.IMPORTER_HTTP_SERVER_URL, serverUrl
+        );
+
+        producerTemplate.requestBodyAndHeaders("direct:start-importer", null, headers);
 
         System.out.println("Finished successfully");
     }

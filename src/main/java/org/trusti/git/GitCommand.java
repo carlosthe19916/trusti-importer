@@ -2,6 +2,7 @@ package org.trusti.git;
 
 import jakarta.inject.Inject;
 import org.apache.camel.ProducerTemplate;
+import org.trusti.Constants;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -35,14 +36,15 @@ public class GitCommand implements Runnable {
         System.out.println("Started ingestion from " + gitRepository);
 
         Map<String, Object> headers = new HashMap<>();
-        headers.put("workspace", workspace);
-        headers.put("repository", gitRepository);
-        headers.put("ref", gitRef);
-        headers.put("workingDirectory", gitWorkingDirectory);
-        headers.put("output", targetUrl);
+        headers.put(Constants.IMPORTER_TYPE_HEADER, "git");
+        headers.put(Constants.IMPORTER_OUTPUT_BASE_URL, targetUrl);
 
-        producerTemplate.requestBodyAndHeaders("direct:import-git", gitRepository, headers);
-        producerTemplate.requestBodyAndHeaders("direct:import-git2", workspace, headers);
+        headers.put(Constants.IMPORTER_GIT_WORKSPACE, workspace);
+        headers.put(Constants.IMPORTER_GIT_REPOSITORY, gitRepository);
+        headers.put(Constants.IMPORTER_GIT_REF, gitRef);
+        headers.put(Constants.IMPORTER_GIT_WORKING_DIRECTORY, gitWorkingDirectory);
+
+        producerTemplate.requestBodyAndHeaders("direct:start-importer", null, headers);
 
         System.out.println("Finished successfully");
     }

@@ -3,7 +3,7 @@ package org.trusti.http;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
-import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.builder.endpoint.EndpointRouteBuilder;
 import org.apache.camel.http.base.HttpOperationFailedException;
 
 import java.io.IOException;
@@ -17,14 +17,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @ApplicationScoped
-public class HttpRoute extends RouteBuilder {
-
-    public static final String OUTPUT_HEADER = "t_output";
+public class HttpRoute extends EndpointRouteBuilder {
 
     private static final Pattern HREF_PATTERN = Pattern.compile("href=\"(.*?)\"");
 
     @Override
     public void configure() throws Exception {
+        from("direct:start-importer-http")
+                .to("direct:discover-url-directory");
+
         from("direct:discover-url-directory")
                 .onException(IOException.class)
                     .useOriginalMessage()
@@ -80,10 +81,7 @@ public class HttpRoute extends RouteBuilder {
                 .setHeader(Exchange.CONTENT_TYPE, constant("text/plain"))
                 .toD("${body}")
 
-                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                .toD("${header." + OUTPUT_HEADER + "}")
-                .setBody(header(Exchange.HTTP_RESPONSE_CODE))
+                .to("direct:send-file")
 
                 .onException(HttpOperationFailedException.class)
                     .maximumRedeliveries(2)

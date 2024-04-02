@@ -1,13 +1,10 @@
 package org.trusti.git;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.apache.camel.LoggingLevel;
-import org.apache.camel.builder.RouteBuilder;
-import org.apache.hc.client5.http.HttpHostConnectException;
-import org.trusti.SendFilesRoute;
+import org.apache.camel.builder.endpoint.EndpointRouteBuilder;
+import org.trusti.Constants;
 
 import java.io.File;
-import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,13 +12,20 @@ import java.util.Comparator;
 import java.util.List;
 
 @ApplicationScoped
-public class GitRoute extends RouteBuilder {
+public class GitRoute extends EndpointRouteBuilder {
 
     @Override
     public void configure() throws Exception {
-        from("direct:import-git")
+        from("direct:start-importer-git")
+                .setBody(header(Constants.IMPORTER_GIT_REPOSITORY))
+                .to("direct:clone-git")
+
+                .setBody(header(Constants.IMPORTER_GIT_WORKSPACE))
+                .to("direct:import-git");
+
+        from("direct:clone-git")
                 .process(exchange -> {
-                    String workspace = exchange.getIn().getHeader("workspace", String.class);
+                    String workspace = exchange.getIn().getHeader(Constants.IMPORTER_GIT_WORKSPACE, String.class);
                     Path workspacePath = Paths.get(workspace);
                     if (workspacePath.toFile().exists()) {
                         try (var stream = Files.walk(workspacePath)) {
@@ -32,12 +36,13 @@ public class GitRoute extends RouteBuilder {
                         }
                     }
                 })
-                .toD("git:${header.workspace}?operation=clone&remotePath=${header.repository}&branchName=${header.ref}");
 
-        from("direct:import-git2")
+                .toD("git:${header." + Constants.IMPORTER_GIT_WORKSPACE + "}?operation=clone&remotePath=${header." + Constants.IMPORTER_GIT_REPOSITORY + "}&branchName=${header." + Constants.IMPORTER_GIT_REF + "}");
+
+        from("direct:import-git")
                 .process(exchange -> {
                     String rootDirectory = exchange.getIn().getBody(String.class);
-                    String workingDirectory = exchange.getIn().getHeader("workingDirectory", String.class);
+                    String workingDirectory = exchange.getIn().getHeader(Constants.IMPORTER_GIT_WORKING_DIRECTORY, String.class);
 
                     Path path = Paths.get(rootDirectory, workingDirectory);
                     try (var stream = Files.walk(path)) {
@@ -51,7 +56,6 @@ public class GitRoute extends RouteBuilder {
                     }
                 })
                 .split(body()).parallelProcessing()
-                    .setHeader(SendFilesRoute.TARGET_URL_HEADER_NAME, header("output"))
                     .to("direct:send-file")
                 .end();
     }
