@@ -1,7 +1,10 @@
 package org.trusti;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
 import java.util.Date;
 
+@RegisterForReflection
 public record TaskDto(
         TaskState state,
         Date started,
@@ -9,6 +12,7 @@ public record TaskDto(
         String error
 ) {
 
+    @RegisterForReflection
     public enum TaskState {
         Not_supported,
         Canceled,
